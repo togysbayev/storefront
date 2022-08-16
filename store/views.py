@@ -9,7 +9,7 @@ from .models import Product, Collection
 from .serializers import CollectionSerializer, ProductSerializer
 from store import serializers
 
-class ProductView(APIView):
+class ProductList(APIView):
     def get(self, request):
         queryset = Product.objects.all()
         serializer = ProductSerializer(queryset, many=True)
@@ -22,7 +22,7 @@ class ProductView(APIView):
         return Response(serializer.data, status.HTTP_201_CREATED)
 
 
-class ProductDetailView(APIView):
+class ProductDetail(APIView):
     def get(self, request, id):
         product = get_object_or_404(Product, pk=id)
         serializer = ProductSerializer(product)
@@ -40,32 +40,37 @@ class ProductDetailView(APIView):
         product.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
     
-@api_view(['GET', 'POST'])
-def collection_list(request):
-    if request.method == 'GET':
-        queryset = Collection.objects.annotate(products_count=Count('product'))
+    
+class CollectionList(APIView):
+    def get(self, request):
+        queryset = Collection.objects.annotate(products_count=Count('products'))
         serializer = CollectionSerializer(queryset, many=True)
         return Response(serializer.data)
-    elif request.method == 'POST':
+    
+    def post(self, request):
         serializer = CollectionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
         
-@api_view(['GET', 'PUT', 'DELETE'])
-def collection_detail(request, id):
-    # collection = Collection.objects.annotate(products_count=Count('product')).get(pk=id)
-    collection = get_object_or_404(Collection.objects.annotate(products_count=Count('products')), pk=id)
-    if request.method == 'GET':
+        
+class CollectionDetail(APIView):
+    def get(self, request, id):
+        collection = get_object_or_404(Collection.objects.annotate(products_count=Count('products')), pk=id)
         serializer = CollectionSerializer(collection)
         return Response(serializer.data)
-    elif request.method == 'PUT':
+    
+    def put(self, request, id):
+        collection = get_object_or_404(Collection.objects.annotate(products_count=Count('products')), pk=id)
         serializer = CollectionSerializer(collection, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
-    elif request.method == 'DELETE':
+    
+    def delete(self, request, id):
+        collection = get_object_or_404(Collection.objects.annotate(products_count=Count('products')), pk=id)
         if collection.products_count > 0:
             return Response({'Error: Collection can not be deleted!'})
         collection.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+        
