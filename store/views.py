@@ -1,4 +1,5 @@
 from ast import Delete
+from encodings import search_function
 from typing import Collection
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
@@ -6,10 +7,13 @@ from rest_framework.response import Response
 from rest_framework.mixins import CreateModelMixin, ListModelMixin, RetrieveModelMixin, UpdateModelMixin
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.viewsets import ModelViewSet
+from rest_framework.filters import SearchFilter, OrderingFilter
+from rest_framework.pagination import PageNumberPagination
+from rest_framework import status
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 from django.db.models import Count
-from rest_framework import status
+from .paginations import DefaultPagination
 from .models import Product, Collection, Review
 from .serializers import CollectionSerializer, ProductSerializer, ReviewSerializer
 from store import serializers
@@ -18,8 +22,11 @@ from .filters import ProductFilter
 class ProductViewSet(ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    filter_backends = [DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = ProductFilter
+    pagination_class = DefaultPagination
+    search_fields = ['title', 'description']
+    ordering_fields = ['unit_price', 'last_update']
     
     def destroy(self, request, *args, **kwargs):
         product = get_object_or_404(Product, pk=kwargs['pk'])
