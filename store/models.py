@@ -23,4 +23,9 @@ class Product(models.Model):
     
     class Meta:
         ordering = ['title']
-    
+
+class Review(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
+    name = models.CharField(max_length=200)
+    description = models.TextField()
+    last_update = models.DateTimeField(auto_now_add=True)
